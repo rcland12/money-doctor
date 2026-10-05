@@ -1,0 +1,12 @@
+# Copy to data/pii.yaml (git-ignored) and fill in. Every entry is removed
+# from statement text before anything is sent to a model. Matching ignores
+# case and extra spaces. Generic patterns (SSNs, account numbers, emails,
+# phones, street addresses) are removed anyway; this catches the rest.
+names:
+  - "First Last"
+  - "FIRST M LAST"          # add every way your name is printed
+address_lines:
+  - "123 Example St"
+  - "Apt 4B"
+employer_ids: []            # employee ID, badge number...
+extra_terms: []             # family member names, anything else

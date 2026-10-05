@@ -1,0 +1,49 @@
+# Example budget. Copy to data/budget.yaml and make it yours.
+# Amounts are monthly. `tracks` = transaction categories that count against a
+# line (see ingest/schemas.py); `match` = description text that pins a
+# transaction to a line (checked first). from/until = active months (YYYY-MM).
+# Kinds: variable (everyday spending), bill (has a due day), fund (saves up for
+# something lumpy), savings (money you keep). Every key: docs/budget-reference.md
+
+owner: Alex
+timezone: America/Chicago
+
+income:
+  paycheck_net: 2000.00
+  pay_anchor: 2026-03-06          # any known payday
+  pay_every_days: 14
+  budget_paychecks: 2             # budget on two; the occasional third is extra
+
+plan:
+  start: 2026-03
+  target_payoff: 2028-09-30
+  strategy: avalanche
+  third_paycheck:
+    - {month: 2027-04, emergency_fund: 1000, rest: cards}
+
+lines:
+  - {key: rent, name: Rent, group: Home, kind: bill, amount: 1100, due_day: 1, pay_from: 2, tracks: [rent_housing, utilities, phone_internet]}
+  - {key: car_payment, name: Car payment, group: Car, kind: bill, amount: 350, due_day: 15, pay_from: 1, match: [AUTO LOAN], debt: car}
+  - {key: car_insurance, name: Car insurance fund, group: Car, kind: fund, amount: 100, pay_from: 1, match: [GEICO, PROGRESSIVE]}
+  - {key: gas, name: Gas, group: Car, kind: variable, amount: 200, tracks: [gas_transport], shortcut: Gas}
+  - {key: subscriptions, name: Subscriptions, group: Subscriptions, kind: bill, amount: 40, due_day: 10, tracks: [subscriptions]}
+  - {key: groceries, name: Groceries, group: Everyday, kind: variable, amount: 350, tracks: [groceries], shortcut: Groceries}
+  - {key: dining, name: Dining, group: Everyday, kind: variable, amount: 150, tracks: [dining], shortcut: Dining}
+  - {key: fun, name: Fun money, group: Life, kind: variable, amount: 150, tracks: [entertainment_leisure], shortcut: Fun}
+  - {key: shopping, name: Shopping, group: Life, kind: variable, amount: 100, tracks: [shopping], shortcut: Shopping}
+  - {key: gifts, name: Gifts fund, group: Life, kind: fund, amount: 40, tracks: [gifts_donations], shortcut: Gifts}
+  - {key: card_a_min, name: Card A minimum, group: Debt, kind: bill, amount: 150, due_day: 20, pay_from: 2, match: [CRD 1111], debt: card_a}
+
+debts:
+  - {key: card_a, name: Card A, kind: credit_card, last4: "1111", balance: 6000, as_of: 2026-02-18, apr: 24.99, minimum: 150, due_day: 20, limit: 8000}
+  - {key: car, name: Car loan, kind: auto, balance: 12000, as_of: 2026-02-11, apr: 6.9, minimum: 350, due_day: 15, payoff_order: last}
+
+savings_goals:
+  - {key: emergency, name: Emergency fund, target: 1000, balance: 0, account: savings_2222}
+
+events:
+  - {date: 2026-12-20, name: "Holiday gifts", amount: 200, line: gifts, kind: event}
+
+digest:
+  send_at: "06:30"
+  to: you@example.com

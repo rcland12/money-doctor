@@ -1,0 +1,24 @@
+Money Doctor · {{ date_long }}
+
+SAFE TO SPEND TODAY: {{ safe.total_per_day | money }}
+({{ safe.left_this_month | money }} left for {{ month_name }}, {{ safe.days_left }} day{{ "" if safe.days_left == 1 else "s" }} to go. A pace, not a limit: unspent money carries forward, and what's left at month end goes to your card payment.)
+{% for l in safe.lines %}  {{ "%-26s" | format(l.name) }} {% if l.remaining <= 0 %}used up{% else %}{{ l.per_day | money }}/day{% endif %}
+{% endfor %}
+{% if payment_days %}PAYMENTS
+{% for g in payment_days %}  {{ g.label }}{% if g.today %} (to do){% endif %}
+{% for i in g["items"] %}    {{ "%-40s" | format(i.name ~ (" (from checking)" if i.kind == "bill" else "")) }} {{ i.amount | money }}{% if i.paid %}  done{% endif %}
+{% for part in i.parts %}        {{ part.label }}: {{ part.amount | money }}
+{% endfor %}{% endfor %}{% endfor %}{% if cash.balance is not none and cash.safe_to_send > 0 %}  You can pay up to {{ cash.safe_to_send | money(false) }} of {{ cash.send_to }}'s upcoming payments early today and keep checking above your {{ cash.cushion | money(false) }} cushion. It comes off the next scheduled payments, so it isn't extra.
+{% endif %}
+{% endif %}{{ month_name | upper }}
+{% for l in variable %}  {{ "%-26s" | format(l.name) }} {{ l.spent | money(false) }} of {{ l.target | money(false) }}{% if l.role == "bad" %}  (over budget){% elif l.role == "warn" %}  (ahead of pace){% endif %}
+{% endfor %}{% if personal %}  Personal: {{ personal.spent | money }} this month (goal $0)
+{% endif %}
+YESTERDAY: {{ yesterday_total | money }}{% if not yesterday %} (nothing logged or imported){% endif %}
+{% for y in yesterday %}  {{ "%-40s" | format(y.description[:40]) }} {{ y.amount | money }}
+{% endfor %}
+{% if events %}COMING UP
+{% for e in events[:5] %}  {{ "%-10s" | format(e.label) }} {{ e.name }}
+{% endfor %}
+{% endif %}Open Money Doctor: {{ url }}
+Bank data through {{ fresh_label or "—" }}; {{ fresh.logged_since }} purchase{{ "" if fresh.logged_since == 1 else "s" }} logged since.

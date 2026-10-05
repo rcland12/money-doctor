@@ -1,0 +1,266 @@
+# =============================================================================
+# Money Doctor: budget intake form
+#
+# HOW TO USE
+#   1. Copy this file:   cp intake/budget-intake.example.yaml intake/budget-intake.yaml
+#   2. Fill in budget-intake.yaml. It is git-ignored, so your numbers stay local.
+#   Tip: run the document ingest first (see ingest/README.md). It reads your
+#   pay statements and BoA PDFs and writes data/ingest/intake-draft.yaml with
+#   income, balances, APRs, and subscriptions already filled in. Then this form
+#   only needs what PDFs can't show: goals, plans, habits, private expenses.
+#   3. Estimates are fine. Put "?" for anything you don't know, and delete
+#      example rows that don't apply. Add as many rows as you need.
+#   4. Tell Claude when it's done. It becomes (a) your budget plan and
+#      (b) the seed data for the app.
+#
+# Money: plain numbers, no $ or commas (1250.00). Dates: YYYY-MM-DD.
+# Frequencies: weekly | biweekly | semimonthly | monthly | quarterly | yearly | once
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. GOALS: what does "winning" look like?
+# -----------------------------------------------------------------------------
+goals:
+  top_priorities:          # rank them, most important first
+    - "pay off credit cards"
+    - "stop living paycheck to paycheck"
+    - "?"
+  debt_free_target_date: "?"            # e.g. 2029-03-01, or "as fast as possible"
+  biggest_money_stress: ""            # one or two sentences, in your own words
+  payoff_style: avalanche             # avalanche (cheapest) | snowball (quick wins) | unsure
+  how_strict: balanced                # aggressive | balanced | gentle
+
+# -----------------------------------------------------------------------------
+# 2. INCOME
+# -----------------------------------------------------------------------------
+income:
+  - name: "Main job"
+    frequency: biweekly
+    net_per_paycheck: 0.00            # what actually lands in your account
+    gross_per_paycheck: 0.00          # before taxes (from paystub)
+    next_pay_date: 2026-10-03
+    deposits_to: "Checking"
+    is_amount_steady: true            # false if hourly/overtime/tips vary
+    notes: ""
+  # - name: "Side gig"
+  #   frequency: monthly
+  #   net_per_paycheck: 0.00
+  #   is_amount_steady: false
+
+retirement:
+  contributing_now: "?"                 # true / false
+  percent_contributed: "?"              # e.g. 4
+  employer_match: "?"                   # e.g. "100% up to 4%", or none
+  deducted_before_net_pay: true
+  other_accounts:                     # IRAs, old 401(k)s, brokerage
+    - { name: "Roth IRA", institution: "", balance: 0.00, as_of: "?", contributing: false }
+
+# -----------------------------------------------------------------------------
+# 3. ACCOUNTS: where money sits (not debts; those go in section 4)
+# -----------------------------------------------------------------------------
+accounts:
+  - name: "Checking"
+    institution: ""                   # bank name
+    type: checking                    # checking | savings | cash | investment
+    balance: 0.00
+    as_of: 2026-09-29
+  - name: "Savings"
+    institution: ""
+    type: savings
+    balance: 0.00
+    as_of: 2026-09-29
+
+# -----------------------------------------------------------------------------
+# 4. DEBTS: every one, even small or embarrassing ones. APR matters most.
+#    (APR is on your statement or in the lender's app.)
+# -----------------------------------------------------------------------------
+debts:
+  - name: "Credit card A"
+    type: credit_card                 # credit_card | personal_loan | auto | student | medical | bnpl | family | payday | collections | other
+    balance: 0.00
+    apr: 0.0                          # e.g. 27.99
+    minimum_payment: 0.00
+    due_day: 15                       # day of month
+    credit_limit: 0.00                # cards only
+    promo_apr: "?"                      # e.g. "0% until 2027-03-01"
+    behind_on_payments: false
+    autopay: false
+    notes: ""
+  - name: "Car loan"
+    type: auto
+    balance: 0.00
+    apr: 0.0
+    minimum_payment: 0.00
+    due_day: 1
+    months_remaining: "?"
+  # Money owed to friends/family counts too.
+
+# -----------------------------------------------------------------------------
+# 4b. INSTALLMENT PLANS: fixed payments that END. When one ends, its payment
+#     rolls straight into debt payoff instead of disappearing into spending.
+# -----------------------------------------------------------------------------
+installment_plans:
+  - name: "iPhone"
+    provider: ""                      # carrier, Apple Card, Citizens One...
+    monthly_payment: 0.00
+    payments_left: "?"
+    final_payment: "?"                # YYYY-MM-DD
+    charged_to: ""                    # which account/card it hits
+  - name: "PayPal item 1"
+    provider: paypal
+    plan_type: "?"                    # pay_in_4 | pay_monthly | paypal_credit_promo
+    # PayPal Credit "no interest if paid in full" promos are DEFERRED interest:
+    # miss the payoff date and ALL the back-interest is charged at once.
+    deferred_interest: "?"
+    monthly_payment: 0.00
+    remaining_balance: 0.00
+    final_payment: "?"                # YYYY-MM-DD
+    charged_to: ""
+  - name: "PayPal item 2"
+    provider: paypal
+    plan_type: "?"
+    deferred_interest: "?"
+    monthly_payment: 0.00
+    remaining_balance: 0.00
+    final_payment: "?"
+    charged_to: ""
+
+# -----------------------------------------------------------------------------
+# 4c. HOUSEHOLD: shared rent/utilities and what roommates owe you
+# -----------------------------------------------------------------------------
+household:
+  total_rent: 0.00
+  your_share_of_rent: 0.00
+  roommates:
+    - { name: "", pays_you: 0.00, covers: "rent share + utilities split", how: zelle }
+  utilities_split: "even"             # even | by room | custom
+
+# -----------------------------------------------------------------------------
+# 5. FIXED MONTHLY BILLS: same (or nearly) every month
+# -----------------------------------------------------------------------------
+bills:
+  - { name: "Rent",           amount: 0.00, frequency: monthly, due_day: 1,  autopay: false, category: housing }
+  - { name: "Electric",       amount: 0.00, frequency: monthly, due_day: "?",  autopay: false, category: utilities }
+  - { name: "Water/Trash",    amount: 0.00, frequency: monthly, due_day: "?",  autopay: false, category: utilities }
+  - { name: "Internet",       amount: 0.00, frequency: monthly, due_day: "?",  autopay: false, category: utilities }
+  - { name: "Phone",          amount: 0.00, frequency: monthly, due_day: "?",  autopay: false, category: utilities }
+  - { name: "Car insurance",  amount: 0.00, frequency: monthly, due_day: "?",  autopay: false, category: insurance }
+  - { name: "Renters/health insurance", amount: 0.00, frequency: monthly, due_day: "?", autopay: false, category: insurance }
+
+# Subscriptions: the ingest finds these on your statements, with their billing
+# days, so you only need to add ones paid some other way (e.g. App Store, PayPal).
+subscriptions:
+  - { name: "Netflix",  amount: 0.00, frequency: monthly, keep: yes }   # keep: yes | no | maybe
+  - { name: "Spotify",  amount: 0.00, frequency: monthly, keep: yes }
+  - { name: "Gym",      amount: 0.00, frequency: monthly, keep: maybe }
+
+# -----------------------------------------------------------------------------
+# 6. VARIABLE SPENDING: rough monthly guesses. "actual" = what you think
+#    you really spend; "wish" = what you'd like it to be.
+# -----------------------------------------------------------------------------
+variable_spending:
+  groceries:           { actual: 0, wish: 0 }
+  dining_out_takeout:  { actual: 0, wish: 0 }
+  coffee_snacks:       { actual: 0, wish: 0 }
+  gas_transport:       { actual: 0, wish: 0 }
+  household_supplies:  { actual: 0, wish: 0 }
+  personal_care:       { actual: 0, wish: 0 }
+  clothing:            { actual: 0, wish: 0 }
+  pets:                { actual: 0, wish: 0 }
+  alcohol_bars:        { actual: 0, wish: 0 }
+  shopping_amazon:     { actual: 0, wish: 0 }
+  medical_copays_rx:   { actual: 0, wish: 0 }
+  other:               { actual: 0, wish: 0 }
+
+# -----------------------------------------------------------------------------
+# 7. LEISURE / FUN MONEY: planned and guilt-free
+# -----------------------------------------------------------------------------
+leisure:
+  what_fun_looks_like: ""             # hobbies, games, concerts, trips, eating out...
+  monthly_amount_that_feels_enough: 0
+  big_fun_goals: []                   # e.g. ["trip in summer 2027: 1500"]
+
+# -----------------------------------------------------------------------------
+# 8. PERSONAL / PRIVATE EXPENSES
+#    Share only what you're comfortable with. The label can be vague
+#    ("Personal 1"). These get budgeted as non-negotiable needs, and can be
+#    shown as a neutral "Personal" line on the dashboard.
+# -----------------------------------------------------------------------------
+personal_expenses:
+  - label: "Personal"
+    amount: 0.00
+    frequency: monthly
+    non_negotiable: true              # true = protect it; false = could flex
+    hide_on_dashboard: true
+    ends_on: "?"                        # if it's temporary
+    notes: ""                         # optional, only if it helps planning
+
+# -----------------------------------------------------------------------------
+# 9. IRREGULAR & ANNUAL COSTS: the "surprise" bills that aren't surprises
+# -----------------------------------------------------------------------------
+irregular:
+  - { name: "Car registration/inspection", amount: 0, frequency: yearly, next_due: "?" }
+  - { name: "Car maintenance/tires",       amount: 0, frequency: yearly, next_due: "?" }
+  - { name: "Holidays & gifts",            amount: 0, frequency: yearly, next_due: 2026-12-01 }
+  - { name: "Birthdays",                   amount: 0, frequency: yearly, next_due: "?" }
+  - { name: "Annual subscriptions/domains", amount: 0, frequency: yearly, next_due: "?" }
+  - { name: "Medical/dental/vision",       amount: 0, frequency: yearly, next_due: "?" }
+
+# -----------------------------------------------------------------------------
+# 9b. LEAVE PLANS: time off you already know about (the ingest tracks balances)
+# -----------------------------------------------------------------------------
+leave_plans:
+  - { what: "", dates: "", hours: 0, costs_money: 0 }   # e.g. trip: flights + hotel
+
+# -----------------------------------------------------------------------------
+# 10. SAVINGS
+# -----------------------------------------------------------------------------
+savings:
+  emergency_fund_now: 0.00
+  other_goals: []                     # e.g. ["new laptop: 1200 by 2027-06"]
+
+# -----------------------------------------------------------------------------
+# 11. HABITS: this is where the real savings usually hide
+# -----------------------------------------------------------------------------
+habits:
+  where_money_disappears: ""          # e.g. "DoorDash after long shifts"
+  impulse_triggers: ""                # stress, boredom, weekends, payday...
+  days_or_times_worst: ""
+  things_already_tried: ""            # apps, spreadsheets, envelopes, what failed and why
+  cash_or_card_mostly: card
+
+# -----------------------------------------------------------------------------
+# 12. NEXT 12 MONTHS: anything known coming up
+# -----------------------------------------------------------------------------
+upcoming:
+  - ""                                # e.g. "lease renewal Mar 2027, rent likely +75"
+                                      # e.g. "tax refund ~800 in Feb", "raise expected Jan"
+
+# -----------------------------------------------------------------------------
+# 13. DATA YOU CAN PROVIDE: for importing history
+# -----------------------------------------------------------------------------
+data_sources:
+  uses_apple_pay: true
+  banks:
+  - bank: ""
+    accounts: ["checking", "credit card"]
+    can_export: csv                   # csv | ofx | qfx | pdf_only | unsure
+    months_available: 6
+
+# -----------------------------------------------------------------------------
+# 14. APP PREFERENCES
+# -----------------------------------------------------------------------------
+app:
+  shortcut_categories:                # the menu on your phone: keep it short (6–10)
+    - Groceries
+    - Dining
+    - Gas
+    - Leisure
+    - Bills
+    - Personal
+    - Shopping
+    - Other
+  subdomain: money.example.com
+  week_starts_on: monday
+  notifications: email                # email | push | none
+  weekly_digest_day: sunday

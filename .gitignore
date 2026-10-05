@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Personal financial data: never commit. The repo is public.
+# ---------------------------------------------------------------------------
+inbox/
+imports/
+data/
+intake/*
+!intake/*.example.yaml
+ingest/pii.yaml
+data/pii.yaml
+# *.local.* also covers CLAUDE.local.md and .claude/settings.local.json
+*.local.*
+.env
+.env.*
+!.env.example
+deploy/*.env
+
+# Safety net: statement-type files anywhere in the tree
+*.pdf
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.ofx
+*.qfx
+*.qbo
+*.db
+*.db-*
+*.sqlite*
+
+# Shipped for everyone, though a global git ignore may list it
+!CLAUDE.md
+
+# Build / tooling
+node_modules/
+web/build/
+web/.svelte-kit/
+__pycache__/
+.venv/
+
+# Personal notes and deployment: never commit
+# PLAN.md: early planning notes about one specific setup.
+# compose.yml: your real compose file (compose.example.yml is committed).
+PLAN.md
+compose.yml
+docker-compose.yml
+compose.override.yml
+docker-compose.override.yml
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Your own pay statement parser (see ingest/paystub.py)
+ingest/paystub_local.py

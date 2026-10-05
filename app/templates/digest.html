@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Money Doctor</title>
+{#- Same colour roles as the website (web/src/app.css). Inline styles carry the
+    light theme for every client; the <style> block switches to the website's
+    dark steps in clients that honour prefers-color-scheme (Apple Mail, iOS). #}
+<style>
+  body, .md-bg { background:#f5f6f8; }
+  a { color:#1c5cab; }
+  @media (prefers-color-scheme: dark) {
+    body, .md-bg { background:#121212 !important; }
+    .md-card { background:#1a1a19 !important; border-color:#33332f !important; }
+    .md-ink { color:#ffffff !important; }
+    .md-ink2 { color:#c3c2b7 !important; }
+    .md-muted { color:#9d9c94 !important; }
+    .md-line { border-color:#33332f !important; }
+    .md-track { background:#242423 !important; }
+    .md-accent { color:#86b6ef !important; }
+    .md-good { color:#5fd35f !important; }
+    .md-warn { color:#fab219 !important; }
+    .md-bad { color:#f08a8a !important; }
+  }
+</style>
+</head>
+{%- set bg = "#f5f6f8" %}{% set surface = "#fcfcfb" %}{% set surface2 = "#f0efec" %}
+{%- set ink = "#0b0b0b" %}{% set ink2 = "#52514e" %}{% set muted = "#6b6a66" %}{% set line = "#e4e3df" %}
+{%- set accent = "#2a78d6" %}{% set accent_ink = "#1c5cab" %}
+{%- set fill = {"good": "#0ca30c", "warn": "#fab219", "bad": "#d03b3b"} %}
+{%- set text = {"good": "#006300", "warn": "#8a5a00", "bad": "#b42318"} %}
+{%- set font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" %}
+{%- set num = "font-variant-numeric:tabular-nums" %}
+{%- set tint = {"good": "#e7f4e7", "warn": "#fdf1d8", "bad": "#fbe7e5"} %}
+{%- macro pill(role, label) %}<span style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:.02em;padding:1px 7px;border-radius:999px;background:{{ tint[role] }};color:{{ text[role] }}">{{ label }}</span>{% endmacro %}
+
+{%- macro card_open(title) -%}
+<tr><td style="padding:0 0 14px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="md-card" style="background:{{ surface }};border:1px solid {{ line }};border-radius:14px">
+<tr><td style="padding:20px 22px">
+{%- if title %}<div class="md-muted" style="font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;color:{{ muted }};padding-bottom:10px">{{ title }}</div>{% endif %}
+{%- endmacro %}
+{%- macro card_close() %}</td></tr></table></td></tr>{% endmacro %}
+{%- macro sep(first) %}{{ '0' if first else '1px solid ' ~ line }}{% endmacro %}
+
+<body class="md-bg" style="margin:0;padding:0;background:{{ bg }};font-family:{{ font }};color:{{ ink }};-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">{{ safe.total_per_day | money }} safe to spend today{% if due %} · {{ due | length }} bill{{ "" if due | length == 1 else "s" }} due this week{% endif %}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="md-bg" style="background:{{ bg }}">
+<tr><td align="center" style="padding:24px 12px 32px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+
+<!-- Header: the website's logo mark and name -->
+<tr><td style="padding:0 4px 16px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td style="vertical-align:middle">
+      <a href="{{ url }}" style="text-decoration:none">
+        <span style="display:inline-block;width:26px;height:26px;line-height:26px;border-radius:7px;background:{{ accent }};color:#ffffff;font-weight:700;font-size:15px;text-align:center;vertical-align:middle">$</span>
+        <span class="md-ink" style="font-weight:600;font-size:16px;color:{{ ink }};vertical-align:middle;padding-left:6px">Money Doctor</span>
+      </a>
+    </td>
+    <td align="right" class="md-muted" style="font-size:13px;color:{{ muted }};vertical-align:middle">{{ date_long }}</td>
+  </tr></table>
+</td></tr>
+
+<!-- Safe to spend -->
+{{ card_open("Safe to spend today") }}
+  <div class="md-ink" style="font-size:46px;line-height:1.05;font-weight:700;letter-spacing:-0.02em;color:{{ ink }};{{ num }}">{{ safe.total_per_day | money }}</div>
+  <div class="md-muted" style="font-size:14px;color:{{ muted }};padding-top:4px">{{ safe.left_this_month | money }} left for {{ month_name }} across your everyday lines · {{ safe.days_left }} day{{ "" if safe.days_left == 1 else "s" }} to go</div>
+  <div class="md-muted" style="font-size:12px;color:{{ muted }};padding-top:6px">A pace, not a limit: spend less today and tomorrow's number goes up. Whatever's left when the month ends goes to your card payment.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px">
+  {%- for pair in safe.lines | batch(2) %}
+    <tr>
+    {%- for l in pair %}
+      <td width="50%" style="padding:6px 0;vertical-align:top">
+        <div class="md-ink2" style="font-size:13px;color:{{ ink2 }}">{{ l.name }}</div>
+        <div style="font-size:14px;{{ num }}">
+          {%- if l.remaining <= 0 %}<span class="md-muted" style="color:{{ muted }}">used up</span>
+          {%- else %}<strong class="md-ink" style="color:{{ ink }}">{{ l.per_day | money }}</strong><span class="md-muted" style="color:{{ muted }}">/day</span>{% endif %}
+        </div>
+      </td>
+    {%- endfor %}
+    {%- if pair | length == 1 %}<td width="50%"></td>{% endif %}
+    </tr>
+  {%- endfor %}
+  </table>
+{{ card_close() }}
+
+<!-- Payments: what to pay, by day -->
+{% if payment_days %}
+{{ card_open("Payments") }}
+  {%- for g in payment_days %}
+  <div class="{{ 'md-accent' if g.today else 'md-muted' }}" style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:{{ accent_ink if g.today else muted }};padding:{{ '0' if loop.first else '14px' }} 0 4px">{{ g.label }}{% if g.today %} · to do{% endif %}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+    {%- for i in g["items"] %}
+    <tr>
+      <td class="md-ink md-line" style="padding:8px 8px 8px 0;border-top:1px solid {{ line }};color:{{ ink }};vertical-align:top">
+        <strong>{{ i.name }}</strong>{% if i.kind == "bill" %} <span class="md-muted" style="font-size:12px;color:{{ muted }}">from checking</span>{% endif %}
+        {%- if i.paid %} &nbsp;{{ pill("good", "Done") }}{% endif %}
+        {%- for part in i.parts %}
+        <div class="md-muted" style="font-size:12px;color:{{ muted }};padding-top:2px">{{ part.label }} · {{ part.amount | money }}</div>
+        {%- endfor %}
+        {%- if i.provisional %}<div class="md-muted" style="font-size:12px;color:{{ muted }};padding-top:2px;font-style:italic">so far; grows with new charges on the card</div>{% endif %}
+        {%- if i.note %}<div class="md-muted" style="font-size:12px;color:{{ muted }};padding-top:2px">{{ i.note }}</div>{% endif %}
+      </td>
+      <td align="right" class="md-ink md-line" style="padding:8px 0;border-top:1px solid {{ line }};color:{{ ink }};white-space:nowrap;vertical-align:top;font-weight:600;{{ num }}">{{ i.amount | money }}</td>
+    </tr>
+    {%- endfor %}
+  </table>
+  {%- endfor %}
+  {%- if cash.balance is not none and cash.safe_to_send > 0 %}
+  <div class="md-ink" style="font-size:13px;color:{{ ink }};padding-top:12px;border-top:1px solid {{ line }};margin-top:10px">
+    You can pay up to <strong>{{ cash.safe_to_send | money(false) }}</strong> of {{ cash.send_to }}'s upcoming payments early today and keep checking above your {{ cash.cushion | money(false) }} cushion. It comes off the next scheduled payments, so it isn't extra.
+  </div>
+  {%- endif %}
+  <div class="md-muted" style="font-size:12px;color:{{ muted }};padding-top:10px">Pay a card back as soon as charges post, so card spending never becomes new debt.</div>
+{{ card_close() }}
+{% endif %}
+
+<!-- This month -->
+{{ card_open(month_name) }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+  {%- for l in variable %}
+    <tr>
+      <td class="md-ink" style="padding:{{ '0' if loop.first else '10px' }} 0 5px;color:{{ ink }}">{{ l.name }}</td>
+      <td align="right" class="md-ink2" style="padding:{{ '0' if loop.first else '10px' }} 0 5px;color:{{ ink2 }};{{ num }}">{{ l.spent | money(false) }} <span class="md-muted" style="color:{{ muted }}">of {{ l.target | money(false) }}</span></td>
+    </tr>
+    <tr><td colspan="2">
+      <div class="md-track" style="height:6px;background:{{ surface2 }};border-radius:3px;overflow:hidden">
+        <div style="height:6px;width:{{ (l.frac * 100) | round(1) }}%;background:{{ fill[l.role] }};border-radius:3px"></div>
+      </div>
+      {%- if l.role != "good" %}
+      <div style="padding-top:5px">{{ pill(l.role, "Over budget" if l.role == "bad" else "Ahead of pace") }}</div>
+      {%- endif %}
+    </td></tr>
+  {%- endfor %}
+  </table>
+  {%- if personal %}
+  <div class="md-ink2" style="font-size:13px;color:{{ ink2 }};padding-top:14px">{{ pill("warn", "Personal") }} &nbsp;{{ personal.spent | money }} this month (goal $0)</div>
+  {%- endif %}
+{{ card_close() }}
+
+<!-- Yesterday -->
+{{ card_open("Yesterday · " ~ (yesterday_total | money)) }}
+  {%- if yesterday %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+    {%- for y in yesterday %}
+    <tr>
+      <td class="md-ink" style="padding:4px 8px 4px 0;color:{{ ink }}">{{ y.description[:38] }}{% if y.line %}<div class="md-muted" style="font-size:12px;color:{{ muted }}">{{ y.line }}</div>{% endif %}</td>
+      <td align="right" class="md-ink" style="padding:4px 0;color:{{ ink }};vertical-align:top;{{ num }}">{{ y.amount | money }}</td>
+    </tr>
+    {%- endfor %}
+  </table>
+  {%- else %}
+  <div class="md-muted" style="font-size:14px;color:{{ muted }}">Nothing logged or imported for yesterday.</div>
+  {%- endif %}
+{{ card_close() }}
+
+<!-- Coming up -->
+{% if events %}
+{{ card_open("Coming up") }}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+  {%- for e in events[:5] %}
+    <tr>
+      <td class="md-muted" style="padding:4px 0;color:{{ muted }};width:84px;white-space:nowrap;vertical-align:top">{{ e.label }}</td>
+      <td class="md-ink" style="padding:4px 0;color:{{ ink }}">{{ e.name }}</td>
+    </tr>
+  {%- endfor %}
+  </table>
+{{ card_close() }}
+{% endif %}
+
+<!-- Button -->
+<tr><td align="center" style="padding:6px 0 18px">
+  <a href="{{ url }}" style="display:inline-block;background:{{ accent }};color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 26px;border-radius:10px">Open Money Doctor&nbsp;&nbsp;→</a>
+</td></tr>
+
+<tr><td align="center" class="md-muted" style="font-size:12px;line-height:1.6;color:{{ muted }};padding:0 12px">
+  Bank data through {{ fresh_label or "—" }} · {{ fresh.logged_since }} purchase{{ "" if fresh.logged_since == 1 else "s" }} logged since<br>
+  Balances, leave, and the payoff plan are on the <a href="{{ url }}/debt" style="color:{{ accent_ink }}">website</a>.
+</td></tr>
+
+</table>
+</td></tr></table>
+</body>
+</html>

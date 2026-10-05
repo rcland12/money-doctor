@@ -1,0 +1,10 @@
+data/
+inbox/
+intake/
+**/node_modules
+web/build
+web/.svelte-kit
+**/__pycache__
+.env*
+deploy/
+.claude/

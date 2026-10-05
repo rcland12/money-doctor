@@ -1,0 +1,124 @@
+# Money Doctor. Copy to compose.yml (git-ignored) and adjust.
+#
+# The app alone works out of the box. The rest are optional profiles:
+#
+#   docker compose up -d --build                    app on http://127.0.0.1:8000
+#   --profile email    postfix relay for the morning email (deploy/postfix.env)
+#   --profile tunnel   nginx + a Cloudflare Tunnel, so your phone can reach it
+#                      from anywhere without opening ports (deploy/cloudflared.env)
+#   --profile nginx    nginx alone, for your own HTTPS setup or port forward
+#   --profile sso      oauth2-proxy, to log in with Keycloak/Authelia/Google
+#                      instead of a password (deploy/oauth2-proxy.env)
+#
+# Or list them once in .env: COMPOSE_PROFILES=email,tunnel
+# See README.md, "Deploying it", for each one.
+
+services:
+  money-doctor:
+    build: .
+    image: money-doctor:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8000:8000"   # local access; remove once nginx/tunnel is in front
+    volumes:
+      - ./data:/data            # budget.yaml, merchant rules, database, uploaded documents
+    networks:
+      money:
+        ipv4_address: 172.30.50.2
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Morning email. Relays through Gmail (or any SMTP provider) so mail from a
+  # home connection isn't blocked or marked as spam. In .env: SMTP_HOST=postfix
+  postfix:
+    profiles: [email]
+    image: boky/postfix:latest
+    restart: unless-stopped
+    env_file: ./deploy/postfix.env
+    networks:
+      - money
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE, SETGID, SETUID, NET_BIND_SERVICE]
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Rate limits, upload size and timeouts in front of the app. The config is
+  # chosen by MD_NGINX_CONF in .env: money-doctor.conf (password login) or
+  # money-doctor-sso.conf (with the sso profile).
+  nginx:
+    profiles: [tunnel, nginx]
+    image: nginxinc/nginx-unprivileged:alpine
+    restart: unless-stopped
+    depends_on:
+      money-doctor:
+        condition: service_healthy
+    volumes:
+      - ./deploy/nginx/${MD_NGINX_CONF:-money-doctor.conf}:/etc/nginx/conf.d/default.conf:ro
+    # ports:
+    #   - "8080:8080"           # only without the tunnel, e.g. behind your own HTTPS proxy
+    networks:
+      money:
+        ipv4_address: 172.30.50.10   # MD_TRUSTED_PROXIES for the sso profile
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Outbound-only tunnel to Cloudflare: no open ports, HTTPS at Cloudflare's
+  # edge. In the Cloudflare dashboard, point the public hostname at http://nginx:8080.
+  cloudflared:
+    profiles: [tunnel]
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    env_file: ./deploy/cloudflared.env
+    depends_on:
+      nginx:
+        condition: service_healthy
+    networks:
+      money:
+        ipv4_address: 172.30.50.20   # nginx trusts CF-Connecting-IP only from here
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Single sign-on in front of the whole site (nginx asks it about every request).
+  oauth2-proxy:
+    profiles: [sso]
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest-alpine
+    restart: unless-stopped
+    env_file: ./deploy/oauth2-proxy.env
+    networks:
+      - money
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  money:
+    ipam:
+      config:
+        - subnet: 172.30.50.0/24   # change if it overlaps a network you already have
+          ip_range: 172.30.50.128/25 # automatic addresses; the fixed ones above stay below .128
